@@ -108,3 +108,223 @@
     <section id="meteo" aria-live="polite"></section>
 
   </main>
+
+  <!-- PARTIE JAVASCRIPT -->
+
+  <script>
+    /*
+      Ce programme permet à l'utilisateur de sélectionner une ville
+      parmi Mérignac, Saint-Geours-de-Maremne et Toulouse.
+
+      Lorsqu'une ville est sélectionnée :
+
+      1. Une requête HTTP est envoyée à l'API OpenWeather
+         grâce à l'API Fetch.
+
+      2. L'API retourne les prévisions météorologiques
+         à intervalles de trois heures.
+
+      3. Les prévisions sont regroupées par journée.
+
+      4. La température minimale et maximale de chaque journée
+         sont calculées.
+
+      5. Les résultats sont affichés dans un tableau HTML.
+    */
+
+    // Clé permettant d'utiliser l'API OpenWeather
+    const API_KEY = "b209f9b9ec677ccca845bd7b1757cbff";
+
+    // Récupère dans le HTML l'élément <select> qui possède l'identifiant "ville".
+    // Cet élément permettra de savoir quelle ville l'utilisateur a sélectionné
+    const selectVille = document.getElementById("ville");
+
+    // Récupère dans le HTML l'élément <section> qui possède l'identifiant "meteo".
+    // C'est dans cette zone que les résultats météo seront affichés.
+    const zoneMeteo = document.getElementById("meteo");
+
+    /*
+      Fonction permettant de récupérer les prévisions météo d'une ville auprès de l'API OpenWeather.
+
+      Paramètre : – ville : nom de la ville recherchée.
+      Retour    : – les données JSON retournées par l'API Fetch.
+    */
+    async function recupererPrevisions(ville) {
+
+      // Construction de l'URL de l'API.
+      // encodeURIComponent() permet d'encoder correctement le nom de la ville dans l'URL.
+      // Exemple : "Mérignac, FR" devient une valeur correctement encodée pour une URL.
+      const url = "https://api.openweathermap.org/data/2.5/forecast"
+        + "?q=" + encodeURIComponent(ville + ",FR")
+        + "&appid=" + API_KEY + "&units=metric";
+
+      // Envoie une requête HTTP GET à l'API.
+      // "await" signifie que JavaScript attend la réponse avant de continuer.
+      const reponse = await fetch(url);
+
+      // Vérifie si la requête HTTP s'est correctement déroulée.
+      // "response-ok" vaut true pour une réponse HTTP réussie
+      // Si ce n'est pas le cas, on déclenche une erreur.
+      if (!reponse.ok) throw new Error("Erreur " + reponse.status);
+
+      // Convertit la réponse JSON en objet JavaScript.
+      // La fonction retourne ensuite ces données.
+      return reponse.json();
+    }
+
+    /*
+     Cette fonction récupère donc toutes les prévisions d'une même journée et recherche :
+      - la température minimale  et – la température maximale.
+    */
+    function minMaxParJour(data) {
+
+      // Objet vide qui va servir à stocker les prévisions regroupées par date.
+      const jours = {};
+
+      // Parcourt toutes les prévisions contenues dans data.list.
+      // "prevision" représente une prévision à un moment donné.
+      for (const prevision of data.list) {
+        // Récupère uniquement la date à partir de dt_txt.
+        // Exemple : "2026-09-24 12:00:00"
+        // devient : "2026-09-24"
+        // slice(0, 10) récupère les 10 premiers caractères.
+        const jour = prevision.dt_txt.slice(0, 10);
+
+        // Vérifie si cette date n'existe pas encore dans l'objet "jours".
+        // Crée deux tableaux pour cette journée :
+        // min : contiendra toutes les températures minimales
+        // max : contiendra toutes les températures maximales
+        if (!jours[jour]) jours[jour] = { min: [], max: [] };
+
+        // Ajoute la température minimale de la prévision dans le tableau des températures minimales du jour.
+        jours[jour].min.push(prevision.main.temp_min);
+
+        // Ajoute la température maximale de la prévision dans le tableau des températures maximales du jour.
+        jours[jour].max.push(prevision.main.temp_max);
+      }
+
+      // Transforme l'objet "jours" en tableau.
+      // Object.entries(jours) permet de récupérer les couples [clé, valeur].
+      // Exemple :
+      // [
+      //   ["2026-09-24", { min : [...], max : [...] }],
+      //   ["2026-09-25", { min : [...], max : [...] }]
+      // ]
+      // Puis map() transforme chaque élément en un objet plus simple
+      return Object.entries(jours).map(([jour, t]) => ({
+
+        // stocke la date.
+        jour,
+
+        // Math.min() recherche la plus petite valeur du tableau des températures minimales.
+        // Le ... permet de transmettre chaque élément du tableau comme argument à Math.min().
+        min: Math.min(...t.min),
+
+        // Math.max() recherche la plus grande valeur du tableau des températures maximales.
+        max: Math.max(...t.max),
+      }));
+    }
+
+    /*
+      Transforme une date au format ISO en date lisible
+      pour un utilisateur français.
+
+      Exemple : "2026-09-24" devient quelque chose comme : "jeudi 24 septembre"
+    */
+    function formaterDate(iso) {
+
+      // Création d'un objet Date.
+      // On ajoute "T12:00:00" pour créer la date à midi.
+      // Cela permet d'éviter certains problèmes liés aux fuseaux horaires.
+      // Convertit la date dans un format français.
+      // Demande à afficher : le jour de la semaine — le numéro du jour — le mois.
+      return new Date(iso + "T12:00:00").toLocaleDateString("fr-FR",
+      { weekday: "long", day: "numeric", month: "long" });
+    }
+
+    /*
+      Affiche les résultats météo dans la page HTML.
+      Paramètres :
+       – ville : nom de la ville.
+       — Jours : tableau contenant les températures min et max de chaque journée.
+    */
+    function afficher(ville, jours) {
+
+      // Transforme chaque journée en ligne HTML du tableau.
+      // map() parcourt le tableau "jours".
+      const lignes = jours.map(j => `
+
+        <tr>
+            <!-- Affiche la date -->
+            <td>${formaterDate(j.jour)}</td>
+
+            <!-- Affiche la température minimale -->
+            <td class="min">${j.min.toFixed(1)} °C</td>
+
+            <!-- Affiche la température maximale -->
+            <td class="max">${j.max.toFixed(1)} °C</td>
+
+        </tr>
+
+      `).join("");
+
+      // Insère le résultat dans la section "meteo".
+      zoneMeteo.innerHTML = `
+        <!-- Affiche le nom de la ville -->
+        <h2>${ville}</h2>
+
+        <!-- Création du tableau météo -->
+        <table>
+
+            <!-- En-tête du tableau -->
+            <thead><tr><th>Jour</th><th>Min</th><th>Max</th></tr></thead>
+
+            <!-- Corps du tableau -->
+            <tbody>${lignes}</tbody>
+
+        </table>`;
+    }
+
+    /*
+      Lorsque l'utilisateur sélectionne une ville :
+      1. on récupère la ville ;
+      2. on affiche "Chargement..." ;
+      3. on appelle l'API ;
+      4. on traite les données ;
+      5. on affiche les résultats.
+    */
+    selectVille.addEventListener("change", async () => {
+
+      // Récupère la valeur sélectionnée dans la liste.
+      const ville = selectVille.value;
+
+      // Vérifie si aucune ville n'a été sélectionnée.
+      // Vide la zone météo.
+      // Arrête l'exécution de la fonction.
+      if (!ville) { zoneMeteo.innerHTML = ""; return; }
+
+      // Affiche un message pendant que la requête est en cours.
+      zoneMeteo.textContent = "Chargement…";
+
+      // try permet d'essayer d'exécuter le code susceptible de provoquer une erreur.
+      try {
+        // Appelle la fonction qui récupère les données météo.
+        // "await" attend la réponse de l'API.
+        const data = await recupererPrevisions(ville);
+
+        // Traite les données récupérées avec minMaxParJour() puis affiche le résultat avec afficher().
+        afficher(ville, minMaxParJour(data));
+
+      // Si une erreur se produit dans le bloc try, le bloc catch est exécuté.
+      } catch (e) {
+
+        // Affiche un message d'erreur dans la page.
+        // "e-message" contient le message de l'erreur.
+        zoneMeteo.innerHTML = `<p class="erreur">Impossible de récupérer la météo (${e.message}).</p>`;
+      }
+    });
+
+  </script>
+
+</body>
+</html>
