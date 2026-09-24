@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+
+  <!-- Permet d'utiliser correctement les caractères accentués -->
+  <meta charset="UTF-8">
+
+  <!-- Permet à la page de s'adapter aux écrans de téléphone -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Titre affiché dans l'onglet du navigateur -->
+  <title>Météo – version Fetch</title>
+
+  <!-- PARTIE CSS : MISE EN FORME DE LA PAGE -->
+
+  <style>
+
+    /* Définition de plusieurs variables de couleurs */
+    :root { --fond:#eef3f6; --encre:#14313f; --accent:#1d6f8c; --froid:#3b82c4; --chaud:#d2691e; }
+
+    /* Tous les éléments utilisent border-box pour calculer plus simplement leur largeur et leur hauteur */
+    * { box-sizing: border-box; }
+
+    /* Mise en forme générale de la page */
+    body { margin:0; padding:2rem 1rem; background:var(--fond); color:var(--encre);
+          font-family: Georgia, "Times New Roman", serif; }
+
+    /* Définit la largeur maximale du contenu et le centre horizontalement */
+    main { max-width: 560px; margin: 0 auto; }
+
+    /* Mise en forme du titre principal */
+    h1 { font-size:1.8rem; margin:0 0 1.5rem; }
+
+    /* Le label est affiché sur sa propre ligne */
+    label { display:block; margin-bottom:.4rem; }
+
+    /* Mise en forme de la liste déroulante */
+    select { width:100%; padding:.7rem; font-size:1rem; border:2px solid var(--accent);
+            border-radius:6px; background:#fff; color:var(--encre); }
+
+    /* Mise en forme de la liste déroulante lorsqu'elle reçoit le focus */
+    select:focus-visible { outline:3px solid var(--froid); outline-offset:2px; }
+
+    /* Ajoute une marge au-dessus de la zone météo */
+    #meteo { margin-top:1.5rem; }
+
+    /* Mise en forme des titres de niveau 2 */
+    h2 { font-size:1.3rem; margin:0 0 .8rem; }
+
+    /* Mise en forme des cellules du tableau */
+    table { width:100%; border-collapse:collapse; background:#fff; border-radius:6px; overflow:hidden; }
+
+    /* Mise en forme des cellules du tableau */
+    th, td { padding:.7rem 1rem; text-align:left; border-bottom:1px solid #d9e3e8; }
+
+    /* Mise en forme de l'en-tête du tableau */
+    th { background:var(--accent); color:#fff; font-weight:normal; }
+
+    /* Affichage des températures minimales en bleu */
+    .min { color:var(--froid); font-weight:bold; }
+
+    /* Affichage des températures maximales en orange */
+    .max { color:var(--chaud); font-weight:bold; }
+
+    /* Mise en forme des messages d'erreur */
+    .erreur { color:#a11; }
+
+  </style>
+
+</head>
+
+
+<body>
+
+  <!-- Élément principal contenant le contenu de la page -->
+  <main>
+
+    <!-- Titre principal de la page -->
+    <h1>Prévisions météo à 5 jours</h1>
+
+    <!-- Texte associé à la liste déroulante -->
+    <label for="ville">Choisissez une ville</label>
+
+    <!-- Liste permettant à l'utilisateur de choisir une ville -->
+    <select id="ville">
+
+      <!-- Valeur vide : aucune ville sélectionnée -->
+      <option value="">— Sélectionner —</option>
+
+      <!-- Première ville disponible -->
+      <option>Mérignac</option>
+
+      <!-- Deuxième ville disponible -->
+      <option>Saint-Geours-de-Maremne</option>
+
+      <!-- Troisième ville disponible -->
+      <option>Toulouse</option>
+
+    </select>
+
+    <!--
+      Cette section est vide au départ.
+
+      JavaScript va venir modifier son contenu pour afficher
+      les prévisions météo.
+    -->
+    <section id="meteo" aria-live="polite"></section>
+
+  </main>
